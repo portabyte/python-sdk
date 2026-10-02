@@ -1,0 +1,106 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/logo-horizontal-white.svg">
+  <img src="assets/logo-horizontal-color.svg" alt="Portabyte" width="260">
+</picture>
+
+# Portabyte Python SDK
+
+Upload, deliver, and manage Portabyte files from a Python server.
+
+## Requirements
+
+- Python 3.9 or later
+- A Portabyte project API key (`pbt_sk_live_...`)
+
+Keep the key on your server. This package is not for browser code.
+
+## Install
+
+Once published to PyPI:
+
+```sh
+pip install portabyte
+```
+
+Until then, install from this directory with `pip install -e .`.
+
+## Quick start
+
+Create a [project API key](https://portabyte.dev/docs/getting-started/api-keys) and put `summary.pdf` beside your script:
+
+```sh
+export PORTABYTE_API_KEY="pbt_sk_live_your_key_here"
+```
+
+```python
+import os
+from portabyte import Portabyte
+
+with Portabyte(os.environ["PORTABYTE_API_KEY"]) as portabyte:
+    asset = portabyte.files.upload("summary.pdf", visibility="public")
+    print(asset["id"], asset["publicUrl"])
+```
+
+The SDK creates an upload session, sends the file to its signed upload URL, and confirms it. The API endpoint is built in; you only provide the project key.
+
+## Common tasks
+
+```python
+with Portabyte(os.environ["PORTABYTE_API_KEY"]) as portabyte:
+    asset = portabyte.files.get(asset_id)
+    delivery = portabyte.files.url(asset_id)
+    page = portabyte.files.list(limit=20)
+    next_page = portabyte.files.list(cursor=page["cursor"], limit=20) if page.get("cursor") else None
+    portabyte.files.remove(asset_id)
+```
+
+Public files have stable delivery URLs. Private files receive short-lived signed URLs; request a fresh one when needed. Set `path` during upload to replace the current file at an application-owned path.
+
+Large files use multipart upload automatically. To recover from an interrupted upload, persist the session returned by `files.create()` and the state passed to the callback:
+
+```python
+from pathlib import Path
+
+file = Path("video.mp4")
+with Portabyte(os.environ["PORTABYTE_API_KEY"]) as portabyte:
+    session = portabyte.files.create(file.name, "video/mp4", file.stat().st_size)
+    # Save session somewhere durable before starting the transfer.
+    asset = portabyte.files.resume(
+        session,
+        file,
+        state=saved_state,
+        on_state_change=lambda state: save_upload_state(state),
+    )
+```
+
+If you need a direct browser upload, call `files.prepare_browser_upload(...)` on your server, send that result to the browser, then call `files.confirm(asset_id)` from your server after the upload succeeds. Never send the API key to the browser. See [Browser uploads](https://portabyte.dev/docs/upload-delivery/browser-uploads).
+
+## Errors
+
+```python
+from portabyte import PortabyteError
+
+try:
+    asset = portabyte.files.get(asset_id)
+except PortabyteError as error:
+    print(error.status, error.code, error.request_id)
+    raise
+```
+
+## Development
+
+```sh
+uv run --with pytest pytest
+uv build
+```
+
+Tests use a mock HTTP transport and do not require an API key.
+
+## Documentation
+
+- [REST API reference](https://portabyte.dev/docs/api-reference)
+- [Public and private files](https://portabyte.dev/docs/upload-delivery/public-and-private-files)
+
+## License
+
+[MIT](./LICENSE)
