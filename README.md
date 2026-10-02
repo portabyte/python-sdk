@@ -75,6 +75,10 @@ with Portabyte(os.environ["PORTABYTE_API_KEY"]) as portabyte:
 
 If you need a direct browser upload, call `files.prepare_browser_upload(...)` on your server, send that result to the browser, then call `files.confirm(asset_id)` from your server after the upload succeeds. Never send the API key to the browser. See [Browser uploads](https://portabyte.dev/docs/upload-delivery/browser-uploads).
 
+To abandon a multipart upload, call `files.cancel(session, state=saved_state)`. The SDK attempts to abort the transfer and removes the pending asset even if its signed URL has expired.
+
+Response shapes such as `Asset`, `CreateSession`, and `ListAssetsResult` are exported as type hints. Runtime responses remain plain dictionaries so newly added API fields remain accessible.
+
 ## Errors
 
 ```python
@@ -91,6 +95,7 @@ except PortabyteError as error:
 
 ```sh
 uv run --with pytest pytest
+uv run --with mypy mypy src/portabyte --ignore-missing-imports
 uv build
 ```
 
@@ -100,6 +105,7 @@ Tests use a mock HTTP transport and do not require an API key.
 
 - [REST API reference](https://portabyte.dev/docs/api-reference)
 - [Public and private files](https://portabyte.dev/docs/upload-delivery/public-and-private-files)
+- [Changelog](./CHANGELOG.md)
 
 ## License
 

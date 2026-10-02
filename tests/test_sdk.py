@@ -1,8 +1,14 @@
 import json
+from importlib.metadata import version
 import httpx
 import pytest
 
 from portabyte import Portabyte, PortabyteError
+from portabyte import __version__
+
+
+def test_package_version_matches_sdk_version():
+    assert version("portabyte") == __version__
 
 
 def client(handler):
@@ -156,3 +162,46 @@ def test_cancel_aborts_transfer_and_deletes_asset():
         ("DELETE", "/v1/uploads/token/multipart/upload-1", False),
         ("DELETE", "/v1/assets/asset-1", True),
     ]
+
+
+def test_cancel_removes_asset_when_gateway_abort_fails():
+    calls = []
+
+    def handler(request):
+        calls.append(request.url.path)
+        if request.url.host == "gateway.test":
+            return httpx.Response(403, json={"code": "expired", "message": "Expired"})
+        return httpx.Response(204)
+
+    with client(handler) as sdk:
+        sdk.files.cancel(session("multipart"), state={"uploadId": "upload-1"})
+    assert calls[-1] == "/v1/assets/asset-1"
+
+
+def test_get_retries_transient_failure_only():
+    calls = []
+
+    def handler(request):
+        calls.append(request.method)
+        if len(calls) == 1:
+            return httpx.Response(503, headers={"retry-after": "0"},
+                                  json={"code": "unavailable", "message": "Try again"})
+        return httpx.Response(200, json={"id": "asset-1"})
+
+    with Portabyte("pbt_sk_live_test", _transport=httpx.MockTransport(handler)) as sdk:
+        assert sdk.files.get("asset-1")["id"] == "asset-1"
+    assert calls == ["GET", "GET"]
+
+
+def test_create_does_not_retry_transient_failure():
+    calls = []
+
+    def handler(request):
+        calls.append(request.method)
+        return httpx.Response(503, json={"code": "unavailable", "message": "Try again"})
+
+    with Portabyte("pbt_sk_live_test", _transport=httpx.MockTransport(handler)) as sdk:
+        with pytest.raises(PortabyteError) as caught:
+            sdk.files.create("sample.txt", "text/plain", 5)
+    assert caught.value.status == 503
+    assert calls == ["POST"]
