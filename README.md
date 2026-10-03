@@ -43,6 +43,21 @@ with Portabyte(os.environ["PORTABYTE_API_KEY"]) as portabyte:
 
 The SDK creates an upload session, sends the file to its signed upload URL, and confirms it. The API endpoint is built in; you only provide the project key.
 
+## Async applications
+
+Use `AsyncPortabyte` in an asyncio-based server. It offers the same `files` operations and closes its connection pool when the `async with` block ends:
+
+```python
+import os
+from portabyte import AsyncPortabyte
+
+async def upload_summary():
+    async with AsyncPortabyte(os.environ["PORTABYTE_API_KEY"]) as portabyte:
+        return await portabyte.files.upload("summary.pdf", visibility="public")
+```
+
+For an interrupted multipart upload, call `await portabyte.files.resume(session, path, state=saved_state, on_state_change=save_state)`. The callback may be a regular function or an async function; the SDK waits for it before uploading the next part.
+
 ## Common tasks
 
 ```python
