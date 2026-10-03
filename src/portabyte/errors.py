@@ -10,8 +10,13 @@ class PortabyteError(Exception):
     available when the server returns one and can help support trace a request.
     """
 
-    def __init__(self, message: str, status: int = 0, code: str = "request_failed",
-                 request_id: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        status: int = 0,
+        code: str = "request_failed",
+        request_id: Optional[str] = None,
+    ) -> None:
         super().__init__(message)
         self.status = status
         self.code = code

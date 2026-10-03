@@ -33,3 +33,7 @@ packages = ["src/portabyte"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py39"
+line-length = 88

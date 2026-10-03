@@ -9,9 +9,13 @@ from portabyte import AsyncPortabyte, PortabyteError
 
 def session(mode="single", size=5):
     value = {
-        "id": "asset-1", "name": "sample.txt", "contentType": "text/plain",
-        "sizeBytes": size, "uploadUrl": "https://gateway.test/v1/uploads/token",
-        "uploadExpiresAt": "2026-10-03T12:00:00Z", "uploadMode": mode,
+        "id": "asset-1",
+        "name": "sample.txt",
+        "contentType": "text/plain",
+        "sizeBytes": size,
+        "uploadUrl": "https://gateway.test/v1/uploads/token",
+        "uploadExpiresAt": "2026-10-03T12:00:00Z",
+        "uploadMode": mode,
         "serverOnly": "secret",
     }
     if mode == "multipart":
@@ -37,7 +41,9 @@ def test_async_single_upload_and_auth_boundary(tmp_path):
         return httpx.Response(200, json={"id": "asset-1", "status": "ready"})
 
     async def run():
-        async with AsyncPortabyte("pbt_sk_live_test", _transport=httpx.MockTransport(handler)) as sdk:
+        async with AsyncPortabyte(
+            "pbt_sk_live_test", _transport=httpx.MockTransport(handler)
+        ) as sdk:
             assert (await sdk.files.upload(file))["status"] == "ready"
 
     asyncio.run(run())
@@ -48,18 +54,26 @@ def test_async_browser_safe_fields_and_errors():
     async def handler(request):
         if request.method == "POST":
             return httpx.Response(201, json=session())
-        return httpx.Response(404, json={"code": "not_found", "message": "Missing",
-                                         "requestId": "req-1"})
+        return httpx.Response(
+            404, json={"code": "not_found", "message": "Missing", "requestId": "req-1"}
+        )
 
     async def run():
-        async with AsyncPortabyte("pbt_sk_live_test", _transport=httpx.MockTransport(handler)) as sdk:
-            browser = await sdk.files.prepare_browser_upload("sample.txt", "text/plain", 5)
+        async with AsyncPortabyte(
+            "pbt_sk_live_test", _transport=httpx.MockTransport(handler)
+        ) as sdk:
+            browser = await sdk.files.prepare_browser_upload(
+                "sample.txt", "text/plain", 5
+            )
             assert "serverOnly" not in browser
             assert browser["assetId"] == "asset-1"
             with pytest.raises(PortabyteError) as caught:
                 await sdk.files.get("missing")
-            assert (caught.value.status, caught.value.code, caught.value.request_id) == (
-                404, "not_found", "req-1")
+            assert (
+                caught.value.status,
+                caught.value.code,
+                caught.value.request_id,
+            ) == (404, "not_found", "req-1")
 
     asyncio.run(run())
 
@@ -76,9 +90,14 @@ def test_async_multipart_resume_awaits_state_callback(tmp_path):
         if "/parts/" in request.url.path:
             number = int(request.url.path.rsplit("/", 1)[1])
             assert "authorization" not in request.headers
-            return httpx.Response(200, json={"partNumber": number, "etag": f"etag-{number}"})
+            return httpx.Response(
+                200, json={"partNumber": number, "etag": f"etag-{number}"}
+            )
         if request.url.path.endswith("/complete"):
-            assert [p["partNumber"] for p in json.loads(request.content)["parts"]] == [1, 2]
+            assert [p["partNumber"] for p in json.loads(request.content)["parts"]] == [
+                1,
+                2,
+            ]
             return httpx.Response(200, json={})
         return httpx.Response(200, json={"id": "asset-1"})
 
@@ -87,9 +106,12 @@ def test_async_multipart_resume_awaits_state_callback(tmp_path):
         saved.append(state)
 
     async def run():
-        async with AsyncPortabyte("pbt_sk_live_test", _transport=httpx.MockTransport(handler)) as sdk:
-            await sdk.files.resume(session("multipart", part_size + 1), file,
-                                   on_state_change=save)
+        async with AsyncPortabyte(
+            "pbt_sk_live_test", _transport=httpx.MockTransport(handler)
+        ) as sdk:
+            await sdk.files.resume(
+                session("multipart", part_size + 1), file, on_state_change=save
+            )
 
     asyncio.run(run())
     assert len(saved) == 3
@@ -102,12 +124,15 @@ def test_async_get_retries_and_create_does_not():
     async def handler(request):
         calls.append(request.method)
         if len(calls) == 1:
-            return httpx.Response(503, headers={"retry-after": "0"},
-                                  json={"code": "unavailable"})
+            return httpx.Response(
+                503, headers={"retry-after": "0"}, json={"code": "unavailable"}
+            )
         return httpx.Response(200, json={"id": "asset-1"})
 
     async def run():
-        async with AsyncPortabyte("pbt_sk_live_test", _transport=httpx.MockTransport(handler)) as sdk:
+        async with AsyncPortabyte(
+            "pbt_sk_live_test", _transport=httpx.MockTransport(handler)
+        ) as sdk:
             assert (await sdk.files.get("asset-1"))["id"] == "asset-1"
 
     asyncio.run(run())
@@ -124,7 +149,9 @@ def test_async_cancel_removes_asset_after_expired_abort():
         return httpx.Response(204)
 
     async def run():
-        async with AsyncPortabyte("pbt_sk_live_test", _transport=httpx.MockTransport(handler)) as sdk:
+        async with AsyncPortabyte(
+            "pbt_sk_live_test", _transport=httpx.MockTransport(handler)
+        ) as sdk:
             await sdk.files.cancel(session("multipart"), state={"uploadId": "upload-1"})
 
     asyncio.run(run())

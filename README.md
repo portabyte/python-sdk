@@ -111,6 +111,8 @@ except PortabyteError as error:
 ```sh
 uv run --with pytest pytest
 uv run --with mypy mypy src/portabyte --ignore-missing-imports
+uv run --with ruff==0.16.10 ruff format src tests
+uv run --with ruff==0.16.10 ruff format --check src tests
 uv build
 ```
 
