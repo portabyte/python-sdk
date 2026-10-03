@@ -27,6 +27,9 @@ dependencies = ["httpx>=0.27,<1"]
 [project.urls]
 Homepage = "https://portabyte.dev"
 Documentation = "https://portabyte.dev/docs"
+Repository = "https://github.com/portabyte/python-sdk"
+Issues = "https://github.com/portabyte/python-sdk/issues"
+Changelog = "https://github.com/portabyte/python-sdk/blob/main/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/portabyte"]

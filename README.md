@@ -5,7 +5,11 @@
 
 # Portabyte Python SDK
 
-Upload, deliver, and manage Portabyte files from a Python server.
+Upload, deliver, and manage files from a Python server with `portabyte`.
+
+[![PyPI version](https://img.shields.io/pypi/v/portabyte)](https://pypi.org/project/portabyte/)
+[![CI](https://github.com/portabyte/python-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/portabyte/python-sdk/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
 ## Requirements
 
@@ -16,21 +20,19 @@ Keep the key on your server. This package is not for browser code.
 
 ## Install
 
-Once published to PyPI:
-
 ```sh
 pip install portabyte
 ```
 
-Until then, install from this directory with `pip install -e .`.
-
 ## Quick start
 
-Create a [project API key](https://portabyte.dev/docs/getting-started/api-keys) and put `summary.pdf` beside your script:
+Create a [project API key](https://portabyte.dev/docs/getting-started/api-keys), then place a PDF named `summary.pdf` beside your script:
 
 ```sh
 export PORTABYTE_API_KEY="pbt_sk_live_your_key_here"
 ```
+
+Save this as `quickstart.py`:
 
 ```python
 import os
@@ -41,7 +43,7 @@ with Portabyte(os.environ["PORTABYTE_API_KEY"]) as portabyte:
     print(asset["id"], asset["publicUrl"])
 ```
 
-The SDK creates an upload session, sends the file to its signed upload URL, and confirms it. The API endpoint is built in; you only provide the project key.
+Run `python quickstart.py`. The SDK creates an upload session, sends the file to its signed upload URL, and confirms it. The API endpoint is built in; you only provide the project key.
 
 ## Async applications
 
@@ -101,6 +103,8 @@ Response shapes such as `Asset`, `CreateSession`, and `ListAssetsResult` are exp
 
 ## Errors
 
+Failed requests raise `PortabyteError`:
+
 ```python
 from portabyte import PortabyteError
 
@@ -110,6 +114,28 @@ except PortabyteError as error:
     print(error.status, error.code, error.request_id)
     raise
 ```
+
+The error exposes `status`, `code`, and `request_id` when the API supplies them.
+
+## Client options
+
+| Option | Purpose | Default |
+| --- | --- | --- |
+| `api_key` | Server API key scoped to a project | Required |
+| `max_retries` | Retries for reads and byte transfers | `2` |
+| `timeout` | Request timeout in seconds | `300` |
+
+Both `Portabyte` and `AsyncPortabyte` accept these options. The SDK retries reads and byte transfers on network failures, `429`, and `5xx`. It does not retry state-changing API requests.
+
+## When to use this SDK
+
+Use it on a trusted server to upload and manage files, prepare direct browser uploads, and request delivery URLs. A browser can send file bytes to a signed upload URL prepared by your server; it must never receive your project API key.
+
+## Documentation
+
+- [REST API reference](https://portabyte.dev/docs/api-reference)
+- [Public and private files](https://portabyte.dev/docs/upload-delivery/public-and-private-files)
+- [Changelog](./CHANGELOG.md)
 
 ## Development
 
@@ -123,11 +149,7 @@ uv build
 
 Tests use a mock HTTP transport and do not require an API key.
 
-## Documentation
-
-- [REST API reference](https://portabyte.dev/docs/api-reference)
-- [Public and private files](https://portabyte.dev/docs/upload-delivery/public-and-private-files)
-- [Changelog](./CHANGELOG.md)
+Report SDK bugs in [GitHub issues](https://github.com/portabyte/python-sdk/issues).
 
 ## License
 
