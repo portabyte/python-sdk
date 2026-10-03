@@ -51,6 +51,7 @@ Use `AsyncPortabyte` in an asyncio-based server. It offers the same `files` oper
 import os
 from portabyte import AsyncPortabyte
 
+
 async def upload_summary():
     async with AsyncPortabyte(os.environ["PORTABYTE_API_KEY"]) as portabyte:
         return await portabyte.files.upload("summary.pdf", visibility="public")
@@ -65,7 +66,11 @@ with Portabyte(os.environ["PORTABYTE_API_KEY"]) as portabyte:
     asset = portabyte.files.get(asset_id)
     delivery = portabyte.files.url(asset_id)
     page = portabyte.files.list(limit=20)
-    next_page = portabyte.files.list(cursor=page["cursor"], limit=20) if page.get("cursor") else None
+    next_page = (
+        portabyte.files.list(cursor=page["cursor"], limit=20)
+        if page.get("cursor")
+        else None
+    )
     portabyte.files.remove(asset_id)
 ```
 
@@ -111,8 +116,8 @@ except PortabyteError as error:
 ```sh
 uv run --with pytest pytest
 uv run --with mypy mypy src/portabyte --ignore-missing-imports
-uv run --with ruff==0.16.10 ruff format src tests
-uv run --with ruff==0.16.10 ruff format --check src tests
+uv run --with ruff==0.16.10 ruff format src tests README.md
+uv run --with ruff==0.16.10 ruff format --check src tests README.md
 uv build
 ```
 
