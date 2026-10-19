@@ -23,7 +23,7 @@ def session(mode="single", size=5):
         "name": "sample.txt",
         "contentType": "text/plain",
         "sizeBytes": size,
-        "uploadUrl": "https://gateway.test/v1/uploads/token",
+        "uploadUrl": "https://gateway.test/v1/token",
         "uploadExpiresAt": "2026-10-02T21:00:00Z",
         "uploadMode": mode,
         "secret": "must-not-reach-browser",
@@ -73,7 +73,7 @@ def test_browser_session_omits_server_fields():
         )
     assert browser == {
         "assetId": "asset-1",
-        "uploadUrl": "https://gateway.test/v1/uploads/token",
+        "uploadUrl": "https://gateway.test/v1/token",
         "uploadExpiresAt": "2026-10-02T21:00:00Z",
         "uploadMode": "multipart",
         "partSize": 5 * 1024 * 1024,
@@ -190,7 +190,7 @@ def test_cancel_aborts_transfer_and_deletes_asset():
     with client(handler) as sdk:
         sdk.files.cancel(session("multipart"), state={"uploadId": "upload-1"})
     assert calls == [
-        ("DELETE", "/v1/uploads/token/multipart/upload-1", False),
+        ("DELETE", "/v1/token/multipart/upload-1", False),
         ("DELETE", "/v1/assets/asset-1", True),
     ]
 

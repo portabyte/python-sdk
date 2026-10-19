@@ -13,7 +13,7 @@ def session(mode="single", size=5):
         "name": "sample.txt",
         "contentType": "text/plain",
         "sizeBytes": size,
-        "uploadUrl": "https://gateway.test/v1/uploads/token",
+        "uploadUrl": "https://gateway.test/v1/token",
         "uploadExpiresAt": "2026-10-03T12:00:00Z",
         "uploadMode": mode,
         "serverOnly": "secret",
